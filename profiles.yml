@@ -1,0 +1,17 @@
+# dbt profile for the project (dbt-duckdb).
+# This file lives in the project root; run dbt with `--profiles-dir .`
+# (or copy it to ~/.dbt/profiles.yml).
+#
+# The `path` is where dbt will both READ the source schema `crm`
+# and WRITE your models. Put the crm_funnel.duckdb
+# file at the path below (default: ./data/crm_funnel.duckdb).
+
+crm_funnel:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'data/crm_funnel.duckdb'
+      threads: 4
+      # schema where models are materialized (sources stay in `crm`)
+      schema: main
