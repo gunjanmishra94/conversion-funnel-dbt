@@ -1,0 +1,175 @@
+version: 2
+
+# Raw CRM tables in the `assignment` schema. Nothing is fixed here; cleaning
+# happens in staging. `unique` is only a warning on LEAD and ACCOUNT because
+# both have known duplicate ids.
+
+sources:
+  - name: assignment
+    description: Raw CRM export of the customer journey from inquiry to delivery.
+    database: interview_assignment   # DuckDB catalog name (= file stem)
+    schema: assignment
+    tables:
+      - name: LEAD
+        description: >
+          Inquiries. One row per lead is intended, but some IDs appear twice
+          with creation timestamps a few minutes apart.
+        columns:
+          - name: ID
+            description: Lead identifier. Duplicated for a small number of leads.
+            data_tests:
+              - not_null
+              - unique:
+                  config:
+                    severity: warn
+          - name: IS_DELETED
+            description: Soft-delete flag set by the CRM.
+            data_tests:
+              - not_null
+          - name: CREATED_DATE
+            description: Creation timestamp. Defines the cohort month of the funnel.
+            data_tests:
+              - not_null
+          - name: LAST_MODIFIED_DATE
+            description: Timestamp of the last change to the lead.
+          - name: STATUS
+            description: Current lead status (New, Qualified, Unqualified, Lost).
+          - name: SUBSTATUS__C
+            description: Secondary status; not used in the funnel.
+          - name: IS_CONVERTED
+            description: True when the lead was converted into an opportunity.
+            data_tests:
+              - not_null
+          - name: CONVERTED_DATE
+            description: Conversion date, stored as text in YYYY-MM-DD form.
+          - name: CONVERTED_OPPORTUNITY_ID
+            description: >
+              Opportunity created at conversion. Empty for some converted leads,
+              so the funnel links opportunities through OPPORTUNITY.LEAD__C instead.
+          - name: CONVERTED_ACCOUNT_ID
+            description: Account created at conversion.
+          - name: LEAD_SOURCE
+            description: Channel the lead came from.
+          - name: BRAND__C
+            description: Brand the lead belongs to.
+          - name: UTM_SOURCE__C
+            description: Marketing source of the visit that produced the lead.
+          - name: UTM_MEDIUM__C
+            description: Marketing medium of that visit.
+          - name: UTM_CAMPAIGN__C
+            description: Marketing campaign of that visit.
+
+      - name: OPPORTUNITY
+        description: Sales cases opened for a lead. A lead can have more than one.
+        columns:
+          - name: ID
+            description: Opportunity identifier.
+            data_tests:
+              - not_null
+              - unique
+          - name: IS_DELETED
+            description: Soft-delete flag set by the CRM.
+            data_tests:
+              - not_null
+          - name: LEAD__C
+            description: Lead the opportunity belongs to (LEAD.ID).
+            data_tests:
+              - not_null
+          - name: ACCOUNT_ID
+            description: Patient account of the opportunity (ACCOUNT.ID).
+          - name: STAGE_NAME
+            description: >
+              Sales stage. Free text: 'Closed Won' occurs in several case and
+              whitespace variants.
+          - name: IS_WON
+            description: True when the opportunity was won.
+          - name: IS_CLOSED
+            description: True when the opportunity is closed, won or lost.
+          - name: BRAND__C
+            description: Brand of the opportunity.
+          - name: CREATED_DATE
+            description: Creation timestamp.
+          - name: LAST_STAGE_CHANGE_DATE
+            description: Timestamp of the last stage change.
+
+      - name: SUBSCRIPTION__C
+        description: Patient subscriptions. A lead can have more than one.
+        columns:
+          - name: ID
+            description: Subscription identifier.
+            data_tests:
+              - not_null
+              - unique
+          - name: IS_DELETED
+            description: Soft-delete flag set by the CRM.
+            data_tests:
+              - not_null
+          - name: LEAD__C
+            description: >
+              Lead the subscription belongs to (LEAD.ID). Empty or pointing at a
+              non-existent lead for a few subscriptions.
+          - name: PATIENT__C
+            description: Patient account of the subscription (ACCOUNT.ID).
+          - name: STATUS__C
+            description: Current subscription status.
+          - name: START_DATE__C
+            description: Start date, stored as text in YYYY-MM-DD form.
+          - name: END_DATE__C
+            description: End date, stored as text in YYYY-MM-DD form.
+          - name: CANCELLATION_REASON__C
+            description: Reason given when the subscription was cancelled.
+          - name: DELIVERY_CYCLE__C
+            description: Delivery frequency of the subscription.
+          - name: BRAND__C
+            description: Brand of the subscription.
+          - name: CREATED_DATE
+            description: Creation timestamp.
+          - name: LAST_MODIFIED_DATE
+            description: Timestamp of the last change to the subscription.
+
+      - name: DELIVERY__C
+        description: Deliveries shipped under a subscription.
+        columns:
+          - name: ID
+            description: Delivery identifier.
+            data_tests:
+              - not_null
+              - unique
+          - name: IS_DELETED
+            description: Soft-delete flag set by the CRM.
+            data_tests:
+              - not_null
+          - name: SUBSCRIPTION__C
+            description: >
+              Subscription the delivery belongs to (SUBSCRIPTION__C.ID). Points
+              at a non-existent subscription for a few deliveries.
+            data_tests:
+              - not_null
+          - name: STATUS__C
+            description: Delivery status (Delivered, Cancelled, Returned).
+          - name: BRAND__C
+            description: Brand of the delivery.
+          - name: CREATED_DATE
+            description: Creation timestamp.
+
+      - name: ACCOUNT
+        description: >
+          Patient accounts. Declared for completeness but not used in the
+          funnel: no stage is defined on it, and leads link to opportunities and
+          subscriptions directly.
+        columns:
+          - name: ID
+            description: Account identifier. Duplicated for a small number of accounts.
+            data_tests:
+              - not_null
+              - unique:
+                  config:
+                    severity: warn
+          - name: IS_DELETED
+            description: Soft-delete flag set by the CRM.
+          - name: NAME
+            description: Patient name.
+          - name: BRAND__C
+            description: Brand of the account.
+          - name: CREATED_DATE
+            description: Creation timestamp.

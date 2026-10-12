@@ -1,0 +1,28 @@
+name: 'interview_assignment'
+version: '1.0.0'
+config-version: 2
+
+profile: 'interview_assignment'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Views for the two cleaning layers, a table for the model people query.
+models:
+  interview_assignment:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    reporting:
+      +materialized: table
+      +schema: reporting

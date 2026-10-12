@@ -1,0 +1,31 @@
+version: 2
+
+macros:
+  - name: clean_text
+    description: Trims a text value and collapses repeated whitespace to a single space.
+    arguments:
+      - name: column
+        type: string
+        description: Column or expression holding the text.
+
+  - name: month_start
+    description: First day of the month of a date or timestamp, returned as a date.
+    arguments:
+      - name: column
+        type: string
+        description: Date or timestamp column or expression.
+
+  - name: conversion_pct
+    description: >
+      Percentage of numerator over denominator, rounded. Returns null when the
+      denominator is null or 0.
+    arguments:
+      - name: numerator
+        type: string
+        description: Column or expression for the count that converted.
+      - name: denominator
+        type: string
+        description: Column or expression for the count it is measured against.
+      - name: decimals
+        type: integer
+        description: Number of decimal places. Defaults to 1.

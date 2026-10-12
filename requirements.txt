@@ -1,0 +1,6 @@
+# Pinned to the versions the assignment was built and verified against.
+# duckdb is pinned exactly: the .duckdb file format is version-specific,
+# and a mismatched duckdb can fail to open the provided database file.
+dbt-core==1.11.11
+dbt-duckdb==1.10.1
+duckdb==1.5.4

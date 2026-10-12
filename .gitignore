@@ -1,0 +1,19 @@
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Data file is delivered separately — do not commit it
+data/*.duckdb
+
+# Temporary files
+/tmp
+
+# macOS
+.DS_Store

@@ -1,0 +1,17 @@
+# dbt profile for the interview assignment (dbt-duckdb).
+# This file lives in the project root; run dbt with `--profiles-dir .`
+# (or copy it to ~/.dbt/profiles.yml).
+#
+# The `path` is where dbt will both READ the source schema `assignment`
+# and WRITE your models. Put the provided interview_assignment.duckdb
+# file at the path below (default: ./data/interview_assignment.duckdb).
+
+interview_assignment:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'data/interview_assignment.duckdb'
+      threads: 4
+      # schema where models are materialized (sources stay in `assignment`)
+      schema: main

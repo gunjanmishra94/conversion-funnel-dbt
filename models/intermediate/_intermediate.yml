@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: int_lead_funnel_stages
+    description: >
+      One row per lead with its cohort month and the funnel stages it reached.
+      Holds each stage's own condition (is_*, has_*) and the strict-sequence
+      result (reached_step_N), where a stage counts only when every earlier
+      stage is also met.
+    columns:
+      - name: lead_id
+        description: Lead identifier, unique in this model.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_leads')
+                field: lead_id
+      - name: lead_month
+        description: First day of the month the lead was created; the cohort.
+        data_tests:
+          - not_null
+      - name: created_at
+        description: Creation timestamp of the lead.
+      - name: brand
+        description: Brand the lead belongs to.
+      - name: lead_source
+        description: Channel the lead came from.
+      - name: utm_source
+        description: Marketing source of the visit that produced the lead.
+      - name: utm_medium
+        description: Marketing medium of that visit.
+      - name: utm_campaign
+        description: Marketing campaign of that visit.
+      - name: is_qualified
+        description: Stage 2 condition on its own; lead status is 'Qualified'.
+      - name: is_converted
+        description: Stage 3 condition on its own; the lead is flagged converted.
+      - name: has_won_opportunity
+        description: >
+          Stage 4 condition on its own; the lead has at least one opportunity
+          in stage 'Closed Won'.
+      - name: has_active_subscription
+        description: >
+          Stage 5 condition on its own; the lead has at least one subscription
+          with status 'Active'.
+      - name: has_delivery
+        description: >
+          Stage 6 condition on its own; at least one delivery exists on an
+          active subscription of the lead.
+      - name: reached_step_1
+        description: Lead Created; true for every lead.
+      - name: reached_step_2
+        description: Lead Qualified under the strict sequence.
+      - name: reached_step_3
+        description: Lead Converted under the strict sequence.
+      - name: reached_step_4
+        description: Opportunity Won under the strict sequence.
+      - name: reached_step_5
+        description: Subscription Active under the strict sequence.
+      - name: reached_step_6
+        description: First Delivery under the strict sequence.
+      - name: is_stage_consistent
+        description: >
+          False when the lead meets a stage's own condition without all earlier
+          stages, so the strict sequence leaves it out of that stage.

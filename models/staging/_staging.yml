@@ -1,0 +1,186 @@
+version: 2
+
+models:
+  - name: stg_leads
+    description: >
+      Cleaned leads, one row per lead. Soft-deleted rows, future-dated leads and
+      duplicated IDs are removed.
+    columns:
+      - name: lead_id
+        description: Lead identifier, unique in this model.
+        data_tests:
+          - unique
+          - not_null
+      - name: lead_status
+        description: Current lead status (New, Qualified, Unqualified, Lost).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['New', 'Qualified', 'Unqualified', 'Lost']
+      - name: lead_substatus
+        description: Secondary lead status; not used in the funnel.
+      - name: is_converted
+        description: True when the lead was converted into an opportunity.
+        data_tests:
+          - not_null
+      - name: converted_date
+        description: Date of conversion.
+      - name: converted_opportunity_id
+        description: Opportunity created at conversion, when recorded.
+      - name: converted_account_id
+        description: Account created at conversion, when recorded.
+      - name: lead_source
+        description: Channel the lead came from.
+      - name: brand
+        description: Brand the lead belongs to.
+      - name: utm_source
+        description: Marketing source of the visit that produced the lead.
+      - name: utm_medium
+        description: Marketing medium of that visit.
+      - name: utm_campaign
+        description: Marketing campaign of that visit.
+      - name: created_at
+        description: Creation timestamp; defines the cohort month.
+        data_tests:
+          - not_null
+      - name: last_modified_at
+        description: Timestamp of the last change to the lead.
+
+  - name: stg_opportunities
+    description: >
+      Cleaned opportunities, one row per opportunity. Soft-deleted rows are
+      removed and the stage name is normalised.
+    columns:
+      - name: opportunity_id
+        description: Opportunity identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: lead_id
+        description: Lead the opportunity belongs to.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_leads')
+                field: lead_id
+      - name: account_id
+        description: Patient account of the opportunity.
+      - name: stage_name
+        description: >
+          Sales stage with surrounding and repeated whitespace removed; all
+          variants of 'Closed Won' are written as 'Closed Won'.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Closed Won'
+                  - 'Closed Lost'
+                  - 'Wird Unterschrieben'
+                  - 'Ist Beantragt'
+                  - 'zu beraten'
+                  - 'Zu Korrigieren'
+      - name: is_closed_won
+        description: True when the normalised stage is 'Closed Won'.
+      - name: is_won
+        description: Won flag as delivered by the CRM.
+      - name: is_closed
+        description: Closed flag as delivered by the CRM.
+      - name: brand
+        description: Brand of the opportunity.
+      - name: created_at
+        description: Creation timestamp.
+      - name: last_stage_change_at
+        description: Timestamp of the last stage change.
+      - name: last_modified_at
+        description: Timestamp of the last change to the opportunity.
+
+  - name: stg_subscriptions
+    description: >
+      Cleaned subscriptions, one row per subscription. Soft-deleted rows are
+      removed and text dates are cast to dates.
+    columns:
+      - name: subscription_id
+        description: Subscription identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: lead_id
+        description: >
+          Lead the subscription belongs to. Empty or unmatched for a few
+          subscriptions, which therefore never enter the funnel.
+        data_tests:
+          # warn only: the unmatched subscriptions are kept on purpose
+          - relationships:
+              arguments:
+                to: ref('stg_leads')
+                field: lead_id
+              config:
+                severity: warn
+      - name: patient_account_id
+        description: Patient account of the subscription.
+      - name: subscription_status
+        description: Current subscription status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Active'
+                  - 'Cancelled'
+                  - 'Completed'
+                  - 'Draft'
+                  - 'On-Hold'
+                  - 'Waiting for Approval'
+      - name: is_active
+        description: True when the current status is 'Active'.
+      - name: start_date
+        description: Start date of the subscription.
+      - name: end_date
+        description: End date of the subscription, when set.
+      - name: cancellation_reason
+        description: Reason given when the subscription was cancelled.
+      - name: delivery_cycle
+        description: Delivery frequency of the subscription.
+      - name: brand
+        description: Brand of the subscription.
+      - name: created_at
+        description: Creation timestamp.
+      - name: last_modified_at
+        description: Timestamp of the last change to the subscription.
+
+  - name: stg_deliveries
+    description: >
+      Cleaned deliveries, one row per delivery. Soft-deleted rows are removed.
+    columns:
+      - name: delivery_id
+        description: Delivery identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: subscription_id
+        description: >
+          Subscription the delivery belongs to. Unmatched for a few deliveries,
+          which therefore never enter the funnel.
+        data_tests:
+          - not_null
+          # warn only: the unmatched deliveries are kept on purpose
+          - relationships:
+              arguments:
+                to: ref('stg_subscriptions')
+                field: subscription_id
+              config:
+                severity: warn
+      - name: delivery_status
+        description: Delivery status (Delivered, Cancelled, Returned).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Delivered', 'Cancelled', 'Returned']
+      - name: brand
+        description: Brand of the delivery.
+      - name: created_at
+        description: Creation timestamp.
